@@ -1,6 +1,23 @@
-# Kubernetes 下使用 Helm 部署 Prometheus 和 Grafana 进行监测接口并告警 {ignore=true}
+# Kubernetes 下使用 Helm 部署 Prometheus 和 Grafana 进行监测接口并告警
 
-[toc]
+- [前期准备](#前期准备)
+- [Prometheus 和 Grafana 的介绍](#prometheus-和-grafana-的介绍)
+  - [Prometheus](#prometheus)
+  - [Grafana](#grafana)
+- [目标](#目标)
+- [环境准备](#环境准备)
+- [配置 kube-prometheus](#配置-kube-prometheus)
+  - [配置 blackbox exporter](#配置-blackbox-exporter)
+  - [配置 Prometheus](#配置-prometheus)
+- [配置 grafana](#配置-grafana)
+- [部署 kube-prometheus](#部署-kube-prometheus)
+  - [坑点 \*](#坑点-)
+  - [部署](#部署)
+- [部署 grafana](#部署-grafana)
+- [Grafana DashBoard 配置](#grafana-dashboard-配置)
+- [Q\&A](#qa)
+- [TODO](#todo)
+- [参考](#参考)
 
 ## 前期准备
 
