@@ -1,4 +1,6 @@
-# Kubernetes 下使用 Helm 部署 Prometheus 和 Grafana 进行监测接口并告警
+# Kubernetes 下使用 Helm 部署 Prometheus 和 Grafana 进行监测接口并告警 {ignore=true}
+
+[toc]
 
 ## 前期准备
 
