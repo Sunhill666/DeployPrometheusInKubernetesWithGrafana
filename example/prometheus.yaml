@@ -1077,16 +1077,16 @@ prometheus:
   additionalPrometheusRules:
     - name: custom-alerting-rules
       groups:
-      - name: does_aiproxy_ok
-        rules:
-        - alert: API Error
-          expr: probe_http_status_code != 200
-          for: 1m
-          labels:
-            severity: critical
-          annotations:
-            summary: "API Error!"
-            description: "The request API gets a non 200 status code!"
+        - name: does_aiproxy_ok
+          rules:
+            - alert: API Error
+              expr: probe_http_status_code != 200
+              for: 1m
+              labels:
+                severity: critical
+              annotations:
+                summary: "API Error!"
+                description: "The request API gets a non 200 status code!"
   ## Note that the prometheus will fail to provision if the correct secret does not exist.
   ## @param prometheus.additionalScrapeConfigs.enabled Enable additional scrape configs
   ## @param prometheus.additionalScrapeConfigs.type Indicates if the cart should use external additional scrape configs or internal configs

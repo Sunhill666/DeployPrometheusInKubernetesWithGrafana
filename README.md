@@ -120,7 +120,7 @@ prometheus:
 1. 在 **blackboxExporter.configuration** 中添加一个模块
 
     ```yaml
-    prometheus:
+    blackboxExporter:
       configuration:  |
         ...
         "<model-name>": # module 名称
@@ -169,16 +169,16 @@ prometheus:
       additionalPrometheusRules:
         - name: <rules-name> # 规则名称
           groups:
-          - name: <rule-group-name> # 规则组名称
-            rules:
-            - alert: <alert-content> # 警告内容
-              expr: <PromQL-expr> # PromQL 表达式
-              for: <for-time> # 等待时间
-              labels: # 自定义标签，允许用户指定要附加到告警上的一组附加标签
-                severity: critical
-              annotations:
-                summary: <alert-summary>
-                description: <alert-desc>
+            - name: <rule-group-name> # 规则组名称
+              rules:
+                - alert: <alert-content> # 警告内容
+                  expr: <PromQL-expr> # PromQL 表达式
+                  for: <for-time> # 等待时间
+                  labels: # 自定义标签，允许用户指定要附加到告警上的一组附加标签
+                    severity: critical
+                  annotations:
+                    summary: <alert-summary>
+                    description: <alert-desc>
     ```
 
 3. 配置 Prometheus ingress \*
@@ -351,7 +351,9 @@ prometheus:
 
 ## TODO
 
-- 实现告警通过 Webhook 推送到钉钉机器人
+- [x] 实现告警通过 Webhook 推送到钉钉机器人 :smiling_face_with_tear:
+- [ ] 部署钉钉告警服务至集群 :expressionless:
+- [ ] 将钉钉告警服务整合至 Helm Chart :exploding_head:
 
 ## 参考
 
