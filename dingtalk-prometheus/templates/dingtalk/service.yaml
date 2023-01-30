@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kube-prometheus-stack.fullname" . }}-translator-service
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+spec:
+  selector:
+    app: {{ template "kube-prometheus-stack.name" . }}-dingtalk-translator
+  ports:
+    - protocol: TCP
+      port: {{ .Values.dingTalk.servicePort }}
+      targetPort: 8000

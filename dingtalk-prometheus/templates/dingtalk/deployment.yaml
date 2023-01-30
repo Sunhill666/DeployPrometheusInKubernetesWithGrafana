@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}-dingtalk-translator
+  name: {{ template "kube-prometheus-stack.fullname" . }}-translator
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "kube-prometheus-stack.name" . }}-dingtalk-translator
+  template:
+    metadata:
+      labels:
+        app: {{ template "kube-prometheus-stack.name" . }}-dingtalk-translator
+    spec:
+      containers:
+        - image: registry.cn-hangzhou.aliyuncs.com/senpai/dingtalk-translator:latest
+          name: {{ template "kube-prometheus-stack.name" . }}-translator
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DINGTALK_ACCESS_TOKEN
+              value: {{ .Values.dingTalk.accessToken }}

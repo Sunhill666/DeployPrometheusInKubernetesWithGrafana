@@ -1,0 +1,36 @@
+apiVersion: v2
+name: dingtalk-prometheus
+description: Integrated Prometheus, Grafana, BlackBox-Exporter and DingTalk Adapter
+dependencies:
+- condition: kubeStateMetrics.enabled
+  name: kube-state-metrics
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 4.24.*
+- condition: nodeExporter.enabled
+  name: prometheus-node-exporter
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 4.8.*
+- condition: grafana.enabled
+  name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 6.50.*
+- condition: blackboxExporter.enabled
+  name: prometheus-blackbox-exporter
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 7.2.*
+keywords:
+- operator
+- prometheus
+- kube-prometheus
+- blackbox
+- monitoring
+- dingtalk
+sources:
+- https://github.com/prometheus-community/helm-charts
+- https://github.com/prometheus-operator/kube-prometheus
+- https://github.com/prometheus/blackbox_exporter
+- https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-blackbox-exporter
+kubeVersion: '>=1.16.0-0'
+type: application
+version: 0.1.0
+appVersion: "1.16.0"

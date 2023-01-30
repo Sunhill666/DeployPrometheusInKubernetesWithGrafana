@@ -1,0 +1,9 @@
+.DS_Store
+# Common VCS dirs
+.git/
+.gitignore
+# helm/charts
+OWNERS
+hack/
+ci/
+kube-prometheus-*.tgz

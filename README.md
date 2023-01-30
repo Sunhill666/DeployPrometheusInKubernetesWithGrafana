@@ -1,4 +1,4 @@
-# Kubernetes 下使用 Helm 部署 Prometheus 和 Grafana 进行监测接口并告警
+# Kubernetes 下使用 Helm 部署 Prometheus 和 Grafana 进行监测接口并利用钉钉进行告警
 
 - [前期准备](#前期准备)
 - [Prometheus 和 Grafana 的介绍](#prometheus-和-grafana-的介绍)
@@ -6,14 +6,15 @@
   - [Grafana](#grafana)
 - [目标](#目标)
 - [环境准备](#环境准备)
-- [配置 kube-prometheus](#配置-kube-prometheus)
-  - [配置 blackbox exporter](#配置-blackbox-exporter)
+- [告警信息的“翻译”](#告警信息的翻译)
+- [配置 dingtalk-prometheus 部署参数](#配置-dingtalk-prometheus-部署参数)
+  - [配置 BlackBox Exporter](#配置-blackbox-exporter)
   - [配置 Prometheus](#配置-prometheus)
-- [配置 grafana](#配置-grafana)
-- [部署 kube-prometheus](#部署-kube-prometheus)
+  - [配置 grafana](#配置-grafana)
+  - [关掉无用告警规则和 Exporter \*](#关掉无用告警规则和-exporter-)
+- [部署 dingtalk-prometheus](#部署-dingtalk-prometheus)
   - [坑点 \*](#坑点-)
   - [部署](#部署)
-- [部署 grafana](#部署-grafana)
 - [Grafana DashBoard 配置](#grafana-dashboard-配置)
 - [Q\&A](#qa)
 - [TODO](#todo)
@@ -24,9 +25,7 @@
 - 阅读本教程确保您了解 Kubernetes 的一些基础概念
 - 了解 YAML 语法
 
-如您在配置时有疑惑可以参考 example 目录下的例子
-prometheus.yaml 文件为 kube-prometheus 文件夹下的 values.yaml
-grafana.yaml 文件为 grafana 文件夹下的 values.yaml
+如您在配置时有疑惑可以参考 example 目录下的 values.yaml
 
 ## Prometheus 和 Grafana 的介绍
 
@@ -73,8 +72,9 @@ Grafana 允许您查询、可视化、告警和理解您的指标，无论它们
 
 ## 目标
 
-使用 Prometheus 的 blackbox-exporter 使用 POST 方法监控一个外部服务接口是否返回 200 的status_code，如不是，则进行告警。
-使用 Grafana 对 Prometheus 的一些 metrics 进行可视化监控。
+- 使用 Prometheus 的 blackbox-exporter 使用 POST 方法监控一个外部服务接口是否返回 200 的status_code，如不是，则进行告警。
+- 使用 Grafana 对 Prometheus 的一些 metrics 进行可视化监控。
+- 与钉钉机器人对接，实现告警
 
 ## 环境准备
 
@@ -84,18 +84,17 @@ Grafana 允许您查询、可视化、告警和理解您的指标，无论它们
 > - Kubernetes Server Version: v1.19.0
 > - Helm Version: v3.10.3
 
-1. Helm 添加 bitnami 仓库并更新
+1. Clone 仓库
 
     ```shell
-    helm repo add <repo-name> https://charts.bitnami.com/bitnami
-    helm repo update
+    git clone https://github.com/Sunhill666/DeployPrometheusInKubernetesWithGrafana.git
     ```
 
-2. 拉取 kube-prometheus 和 grafana 的 Chart 并解压
+2. 更新 Charts 依赖
 
     ```shell
-    helm pull <repo-name>/kube-prometheus --untar
-    helm pull <repo-name>/grafana --untar
+    cd dingtalk-prometheus
+    helm dependency update
     ```
 
 3. 在 Kubernetes 创建新的命名空间
@@ -104,10 +103,109 @@ Grafana 允许您查询、可视化、告警和理解您的指标，无论它们
     kubectl create namespace <your-namespace>
     ```
 
-## 配置 kube-prometheus
+## 告警信息的“翻译”
 
-本章节如未特别说明，默认在 **kube-prometheus** 目录下 **values.yaml** 中进行修改
-如 **prometheus.serviceAccount.create=true** 则代表：
+> 以下是对 `translator` 目录的解释，只对于 Model 进行说明，具体业务逻辑自行查看。
+
+因为 Prometheus 的 [AlertManager 发出的告警信息格式](https://prometheus.io/docs/alerting/latest/notifications/)与[钉钉所能接受的信息格式](https://open.dingtalk.com/document/orgapp/custom-robot-access)不匹配
+
+```json
+{
+    "version": "4",
+    "receiver": "null",
+    "status": "firing",
+    "truncatedAlerts": 0,
+    "groupKey": "{}:{alertname:\"API Error\", instance:\"prometheus-kube-prometheus-blackbox-exporter:19115\"}",
+    "alerts": [
+        {
+            "status": "firing",
+            "labels": {
+                "alertname": "API Error",
+                "instance": "prometheus-kube-prometheus-blackbox-exporter:19115",
+                "job": "aiproxy",
+                "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+                "severity": "critical"
+            },
+            "annotations": {
+                "description": "The request API gets a non 200 status code!",
+                "summary": "API Error!"
+            },
+            "startsAt": "2023-01-17T09:43:35.891246",
+            "endsAt": "2023-01-17T10:43:35.891246",
+            "generatorURL": "http://prometheus.hostname.com/graph?g0.expr=probe_http_status_code+%21%3D+200&g0.tab=1",
+            "fingerprint": "213e839c0bf29378"
+        }
+    ],
+    "groupLabels": {
+        "alertname": "API Error",
+        "instance": "prometheus-kube-prometheus-blackbox-exporter:19115"
+    },
+    "commonLabels": {
+        "alertname": "API Error",
+        "instance": "prometheus-kube-prometheus-blackbox-exporter:19115",
+        "job": "aiproxy",
+        "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+        "severity": "critical"
+    },
+    "commonAnnotations": {
+        "description": "The request API gets a non 200 status code!",
+        "summary": "API Error!"
+    },
+    "externalURL": "http://alertmanager.hostname.com"
+}
+```
+
+所以需要对二者进行一个“翻译”，在 `models.py` 中使用 Pydantic 创建相关模型
+
+```python
+from datetime import datetime
+from typing import List, Dict
+
+from pydantic import BaseModel, Field
+
+
+class Alert(BaseModel):
+    status: str
+    labels: Dict[str, str] = dict()
+    annotations: Dict[str, str] = dict()
+    start_at: datetime = Field(alias="startsAt")
+    end_at: datetime = Field(alias="endsAt")
+    generator_url: str = Field(alias="generatorURL")
+    fingerprint: str
+
+
+class Notification(BaseModel):
+    version: str
+    receiver: str
+    status: str
+    truncated_alerts: int = Field(alias="truncatedAlerts", default=0)
+    group_key: str = Field(alias="groupKey")
+    alerts: List[Alert] = list()
+    group_labels: Dict[str, str] = Field(alias="groupLabels")
+    common_labels: Dict[str, str] = Field(alias="commonLabels")
+    common_annotations: Dict[str, str] = Field(alias="commonAnnotations")
+    external_url: str = Field(alias="externalURL")
+
+
+class DingTalkMessage(BaseModel):
+    msgtype: str = "markdown"
+    markdown: Dict[str, str]
+
+```
+
+然后在业务中监听 AlertManager 发出的告警信息，并进行“翻译”后发送至机器人的 WebHook 地址
+
+```python
+# 监听 AlertManager 发出的告警信息并“翻译”，然后发出
+@app.post("/webhook")
+async def webhook(notification: Notification):
+    ...
+```
+
+## 配置 dingtalk-prometheus 部署参数
+
+使用合适的编辑器打开 `dingtalk-prometheus` 目录下的 `values.yaml` 文件
+本章节如未特别说明，修改 `prometheus.serviceAccount.create=true` 则代表：
 
 ```yaml
 prometheus:
@@ -115,23 +213,25 @@ prometheus:
     create: true
 ```
 
-### 配置 blackbox exporter
+### 配置 BlackBox Exporter
 
-1. 在 **blackboxExporter.configuration** 中添加一个模块
+> Blackbox Exporter 是 Prometheus 社区提供的官方黑盒监控解决方案，其允许用户通过：HTTP、HTTPS、DNS、TCP以及ICMP的方式对网络进行探测。
+
+1. 修改 `prometheus-blackbox-exporter.config.modules`
 
     ```yaml
-    blackboxExporter:
-      configuration:  |
-        ...
-        "<model-name>": # module 名称
-          "prober": "http" # 使用 HTTP 协议
-          "timeout": "15s"
-          "http":
-            "method": "POST" # 使用 POST 方法
-            "preferred_ip_protocol": "ip4" # 使用 IPv4 协议
-            "headers":
-              "Content-Type": "application/json"
-            "body": '{...}'
+    prometheus-blackbox-exporter:
+      config:
+        modules:
+          "<model-name>": # module 名称
+            "prober": "http" # 使用 HTTP 协议
+            "timeout": "15s"
+            "http":
+              "method": "POST" # 使用 POST 方法
+              "preferred_ip_protocol": "ip4" # 使用 IPv4 协议
+              "headers":
+                "Content-Type": "application/json"
+              "body": '{"key": "value"}' # 请求参数
     ```
 
 ### 配置 Prometheus
@@ -140,101 +240,151 @@ prometheus:
 
     ```yaml
     prometheus:
-      additionalScrapeConfigs:
-        enabled: true
-        type: internal
-        internal:
-          jobList:
-            - job_name: <job-name>
-              metrics_path: <metrics-path> # eg: /probe
-              params:
-                module: [<model-name>] # blackbox exporter 模块名称
-              static_configs:
-                - targets: [<API_url>] # 需要监测的接口地址
-              relabel_configs: 
-                - source_labels: [__address__]
-                  target_label: __param_target
-                - source_labels: [_param_target]
-                  target_label: instance
-                - target_label: __address__
-                  replacement: <blackbox-exporter-service-name>:<blackbox-exporter-service-port> # blackbox exporter 的 Service 名称 + 端口号
+      prometheusSpec:
+        additionalScrapeConfigs:
+          - job_name: <job-name>
+            metrics_path: <metrics-path> # eg: /probe
+            params:
+              module: [<model-name>] # blackbox exporter 模块名称
+            static_configs:
+              - targets: [<API_url>] # 需要监测的接口地址
+            relabel_configs: 
+              - source_labels: [__address__]
+                target_label: __param_target
+              - source_labels: [_param_target]
+                target_label: instance
+              - target_label: __address__
+                replacement: <blackbox-exporter-service-name>:<blackbox-exporter-service-port> # blackbox exporter 的 Service 名称 + 端口号
     ```
-
-    如 type 需要设置为 external 参考：[Additional Scrape Configuration](https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/additional-scrape-config.md)
 
 2. 配置 AlerterRules（告警规则）
 
     ```yaml
-    prometheus:
-      additionalPrometheusRules:
-        - name: <rules-name> # 规则名称
-          groups:
-            - name: <rule-group-name> # 规则组名称
-              rules:
-                - alert: <alert-content> # 警告内容
-                  expr: <PromQL-expr> # PromQL 表达式
-                  for: <for-time> # 等待时间
-                  labels: # 自定义标签，允许用户指定要附加到告警上的一组附加标签
-                    severity: critical
-                  annotations:
-                    summary: <alert-summary>
-                    description: <alert-desc>
+    additionalPrometheusRulesMap:
+      <rules-name>:
+        groups:
+          - name: <rule-group-name> # 规则组名称
+            rules:
+              - alert: <alert-content> # 警告内容
+                expr: <PromQL-expr> # PromQL 表达式
+                for: <for-time> # 等待时间
+                labels: # 自定义标签，允许用户指定要附加到告警上的一组附加标签
+                  severity: critical
+                annotations:
+                  summary: <alert-summary>
+                  description: <alert-desc>
     ```
 
-3. 配置 Prometheus ingress \*
+3. 配置 WebHook
+`alertmanager.config.receivers` 中 `webhook_configs` 的 `url` 要与上面的“翻译”所监听 `url` 一致
+
+    ```yaml
+    alertmanager:
+      config:
+        route:
+          group_by: ['<labelname>'] # 依据标签名将告警进行分组
+          group_wait: 30s # 同一组告警等待时间
+          group_interval: 5m # 同一组告警周期时间
+          repeat_interval: 4h # 重复告警周期时间
+          receiver: '<receiver-name>'
+          routes:
+            - receiver: '<receiver-name>'
+              matchers:
+                - severity =~ "warning|critical" # 匹配标签发送告警
+        receivers:
+          - name: '<receiver-name>'
+            webhook_configs:
+              - url: '<dingtalk-translator-service>'
+    ```
+
+4. 配置 Prometheus 和 AlertManager 的 ingress \*
 
     ```yaml
     prometheus:
       ingress:
         enabled: true
-        hostname: <prometheus-hostname> # prometheus 访问域名
+        hosts:
+          - <prometheus-hostname> # prometheus 访问域名
+        ingressClassName: <ingress-controller-name> # ingress Controller
+    
+    alertmanager:
+      ingress:
+        enabled: true
+        hosts:
+          - <alertmanager-hostname> # alertmanager 访问域名
         ingressClassName: <ingress-controller-name> # ingress Controller
     ```
 
-## 配置 grafana
+### 配置 grafana
 
-本章节如未特别说明，默认在 **grafana** 目录下 **values.yaml** 中进行修改
-
-1. 修改 Dashboard 登陆用户名及密码
+1. 修改 Dashboard 登陆密码
 
     ```yaml
-    admin:
-      user: "<username>"
-      password: "<password>"
+    grafana:
+      adminPassword: <password>
     ```
 
-2. 修改持久化存储配置
+2. 配置 grafana 的 ingress \*
 
     ```yaml
-    persistence:
-      enabled: true
-      storageClass: <storage-class>
-      accessMode: ReadWriteMany
+    grafana:
+      ingress:
+        enabled: true
+        hosts:
+          - <grafana-hostname> # grafana 访问域名
+        ingressClassName: <ingress-controller-name> # ingress Controller
     ```
 
-3. 配置 ingress \*
+### 关掉无用告警规则和 Exporter \*
 
-    ```yaml
-    ingress:
-      enabled: true
-      hostname: <grafana-hostname> # grafana 访问域名
-      ingressClassName: <ingress-controller-name> # ingress Controller
-    ```
+```yaml
+defaultRules:
+  create: false
 
-## 部署 kube-prometheus
+kubeApiServer:
+  enabled: false
+
+kubelet:
+  enabled: false
+
+kubeControllerManager:
+  enabled: false
+
+coreDns:
+  enabled: false
+
+kubeEtcd:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+
+kubeProxy:
+  enabled: false
+
+kubeStateMetrics:
+  enabled: false
+```
+
+## 部署 dingtalk-prometheus
 
 ### 坑点 \*
 
-一个集群中只能有一个 **Prometheus Operator**
-> Only one instance of the Prometheus Operator component should be running in a cluster.
+1. 一个集群中只能有一个 **Prometheus Operator**
+
+    > Only one instance of the Prometheus Operator component should be running in a cluster.
+
+2. 注意在 BlackBox Exporter 中 POST 的请求参数不要过长，以及在 `dingtalk-prometheus` 目录下不要有其余无关文件，否则会出现
+
+    > failed to create: Secret "sh.helm.release.v1.****.v1" is invalid: data: Too long: must have at most 1048576 bytes
 
 ### 部署
 
-1. 部署 kube-prometheus
+1. 部署 dingtalk-prometheus
 
     ```shell
-    cd kube-prometheus
-    helm install -n <your-namespace> <prometheus-release-name> <repo-name>/kube-prometheus -f values.yaml
+    cd dingtalk-prometheus
+    helm install -n <your-namespace> <prometheus-release-name> . -f values.yaml
     ```
 
 2. 查看状态
@@ -260,31 +410,14 @@ prometheus:
     可以看到所添加的模块
     ![blackbox exporter](pics/pic-3.png)
 
-## 部署 grafana
+## Grafana DashBoard 配置
 
-1. 部署 grafana
-
-    ```shell
-    cd grafana
-    helm install -n <your-namespace> <grafana-release-name> <repo-name>/grafana -f values.yaml
-    ```
-
-2. 查看状态
-
-    ```shell
-    helm status <grafana-release-name> -n <your-namespace>
-    kubectl get pods -n <your-namespace>
-    kubectl get service -n <your-namespace>
-    ```
-
-3. 访问在 ingress 配置的 Hostname，使用配置的用户名及密码登陆
+1. 访问在 ingress 配置的 Hostname，使用配置密码登陆
     ![Login](pics/pic-4.png)
 
     ![Home](pics/pic-5.png)
 
-## Grafana DashBoard 配置
-
-1. 配置数据源
+2. 配置数据源
 
     选择添加 Prometheus 数据源
     ![添加数据源](pics/pic-6.png)
@@ -297,7 +430,7 @@ prometheus:
     ![URL地址](pics/pic-7.png)
     划到最下点击 Save & test
 
-2. 配置 DashBoard
+3. 配置 DashBoard
 
     添加新的 DashBoard 并添加新的 Panel
     ![DashBoard & Panel](pics/pic-8.png)
@@ -325,8 +458,7 @@ prometheus:
     使用如下命令来更新
 
     ```shell
-    helm upgrade -n <your-namespace> <prometheus-release-name> <repo-name>/kube-prometheus -f values.yaml
-    helm upgrade -n <your-namespace> <grafana-release-name> <repo-name>/grafana -f values.yaml
+    helm upgrade -n <your-namespace> <prometheus-release-name> . -f values.yaml
     ```
 
 3. 出现如下报错怎么解决？
@@ -352,15 +484,22 @@ prometheus:
 ## TODO
 
 - [x] 实现告警通过 Webhook 推送到钉钉机器人 :smiling_face_with_tear:
-- [ ] 部署钉钉告警服务至集群 :expressionless:
-- [ ] 将钉钉告警服务整合至 Helm Chart :exploding_head:
+- [x] 部署钉钉告警服务至集群 :expressionless:
+- [x] 将钉钉告警服务整合至 Helm Chart :exploding_head:
+- [ ] 以上使用的 Chart 是使用 [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) 而改，后期将简化 Chart
 
 ## 参考
 
-- [Prometheus 做Post 接口请求监控](https://www.51cto.com/article/697946.html)
-- [Customize Scrape Configurations](https://docs.bitnami.com/kubernetes/apps/prometheus-operator/configuration/customize-scrape-configurations/)
-- [Additional Scrape Configuration](https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/additional-scrape-config.md)
-- [Prometheus](https://prometheus.io/docs/introduction/overview/)
-- [Prometheus Book](https://yunlzheng.gitbook.io/prometheus-book/)
 - [Grafana](https://github.com/grafana/grafana)
+- [Helm Docs](https://helm.sh/docs/)
+- [Prometheus](https://prometheus.io/docs/introduction/overview/)
+- [钉钉开放平台](https://open.dingtalk.com/)
+- [Prometheus Book](https://yunlzheng.gitbook.io/prometheus-book/)
+- [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
+- [prometheus-blackbox-exporter](https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-blackbox-exporter)
+- [Additional Scrape Configuration](https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/additional-scrape-config.md)
+- [Prometheus 做Post 接口请求监控](https://www.51cto.com/article/697946.html)
+- [Helm upgrade fails with an error...](https://www.ibm.com/support/pages/helm-upgrade-fails-error-secret-shhelmreleasev1b2b-dev-b2biv40-invalid-data-too-long-must-have-most-1048576-bytes-error)
+- [Customize Scrape Configurations](https://docs.bitnami.com/kubernetes/apps/prometheus-operator/configuration/customize-scrape-configurations/)
+- [Prometheus Alert Model for Python](https://github.com/trallnag/prometheus-alert-model-for-python)
 - [Create a Multi-Cluster Monitoring Dashboard with Thanos, Grafana and Prometheus](https://docs.bitnami.com/tutorials/create-multi-cluster-monitoring-dashboard-thanos-grafana-prometheus/)
