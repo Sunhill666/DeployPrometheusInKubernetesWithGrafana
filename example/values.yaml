@@ -95,30 +95,7 @@ defaultRules:
 
 ## Provide custom recording or alerting rules to be deployed into the cluster.
 ##
-additionalPrometheusRulesMap:
-  custom-alerting-rules:
-    groups:
-      - name: does_aiproxy_ok
-        rules:
-          - alert: API Error
-            expr: probe_http_status_code != 200
-            for: 1m
-            labels:
-              severity: critical
-            annotations:
-              summary: "API Error!"
-              description: "The request API gets a non 200 status code!"
-      - name: node_healthy
-        rules:
-          - alert: CPUUsageAlert
-            expr: sum(rate(node_cpu_seconds_total{mode="idle"}[5m])) by (instance) / sum(rate(node_cpu_seconds_total[5m])) by (instance) * 100 > 90
-            for: 1m
-            labels:
-              severity: warning
-            annotations:
-              summary: "Node {{ $labels.instance }} CPU usgae high"
-              description: "Node {{ $labels.instance }} CPU usage above 90% (current value: {{ $value }})"
-
+additionalPrometheusRulesMap: {}
 #  rule-name:
 #    groups:
 #    - name: my_group
@@ -200,7 +177,7 @@ alertmanager:
     global:
       resolve_timeout: 5m
     route:
-      group_by: ['alertname', 'instance']
+      group_by: [ 'alertname', 'instance' ]
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 4h
@@ -209,10 +186,10 @@ alertmanager:
         - receiver: 'dingtalk'
           matchers:
             - severity =~ warning|critical
-    receivers:
-      - name: 'dingtalk'
-        webhook_configs:
-          - url: 'http://translator-service:8000/webhook/'
+      receivers:
+        - name: 'dingtalk'
+          webhook_configs:
+            - url: 'http://dingtalk-prometheus-translator-service:8000/webhook/'
 
   ## Pass the Alertmanager configuration directives through Helm's templating
   ## engine. If the Alertmanager configuration contains Alertmanager templates,
@@ -2988,19 +2965,19 @@ prometheus:
     ## port to 2379 and allow etcd scraping provided it is running on all Kubernetes master nodes
     ##
     additionalScrapeConfigs:
-    - job_name: "aiproxy"
-      metrics_path: /probe
-      params:
-        module: [r_u_ok]
-      static_configs:
-        - targets: ["http://ai-aiproxy.hostname:8080/aiproxy"]
-      relabel_configs: 
-        - source_labels: [__address__]
-          target_label: __param_target
-        - source_labels: [_param_target]
-          target_label: instance
-        - target_label: __address__
-          replacement: blackbox-prometheus-blackbox-exporter:9115
+      - job_name: "http_sd"
+        metrics_path: /probe
+        http_sd_config:
+          url: http://dingtalk-prometheus-translator-service:8000/serve/
+        relabel_configs:
+          - source_labels: [ __address__ ]
+            target_label: __param_target
+          - source_labels: [ __param_target ]
+            target_label: instance
+          - source_labels: [ module ]
+            target_label: __param_module
+          - target_label: __address__
+            replacement: dingtalk-prometheus-prometheus-blackbox-exporter:9115
     # - job_name: kube-etcd
     #   kubernetes_sd_configs:
     #     - role: node
@@ -3781,21 +3758,8 @@ thanosRuler:
 cleanPrometheusOperatorObjectNames: false
 
 dingTalk:
-  accessToken: token
+  accessToken: ""
   servicePort: 8000
 
 blackboxExporter:
   enabled: true
-
-prometheus-blackbox-exporter:
-  config:
-    modules:
-      r_u_ok:
-        prober: http
-        timeout: 15s
-        http:
-          method: POST
-          preferred_ip_protocol: ip4
-          headers:
-            Content-Type: application/json
-          body: '{"image": "asd", "age": 18, "gender": 0}'

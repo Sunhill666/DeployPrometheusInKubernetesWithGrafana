@@ -251,7 +251,7 @@ prometheus:
             relabel_configs: 
               - source_labels: [__address__]
                 target_label: __param_target
-              - source_labels: [_param_target]
+              - source_labels: [__param_target]
                 target_label: instance
               - target_label: __address__
                 replacement: <blackbox-exporter-service-name>:<blackbox-exporter-service-port> # blackbox exporter 的 Service 名称 + 端口号

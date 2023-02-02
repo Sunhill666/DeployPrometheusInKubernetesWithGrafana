@@ -3,6 +3,7 @@ Configure handlers and formats for application loggers.
 Reference: https://gist.github.com/nkhitrov/a3e31cfcc1b19cba8e1b626276148c49
 """
 import logging
+from functools import wraps
 
 from loguru import logger
 
@@ -29,6 +30,17 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(
             level, record.getMessage()
         )
+
+
+def log(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        logger.info("-" * 40)
+        logger.info(f"调用 {func.__name__}()")
+        logger.info("-" * 40)
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def init_logging():

@@ -1,32 +1,69 @@
-from datetime import datetime
-from typing import List, Dict
+from enum import Enum
+from typing import List
 
-from pydantic import BaseModel, Field
+from sqlalchemy import Column, String, JSON, Enum as SQLEnum, Text, ForeignKey
+from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-
-class Alert(BaseModel):
-    status: str
-    labels: Dict[str, str] = dict()
-    annotations: Dict[str, str] = dict()
-    start_at: datetime = Field(alias="startsAt")
-    end_at: datetime = Field(alias="endsAt")
-    generator_url: str = Field(alias="generatorURL")
-    fingerprint: str
+from database import Base
 
 
-class Notification(BaseModel):
-    version: str
-    receiver: str
-    status: str
-    truncated_alerts: int = Field(alias="truncatedAlerts", default=0)
-    group_key: str = Field(alias="groupKey")
-    alerts: List[Alert] = list()
-    group_labels: Dict[str, str] = Field(alias="groupLabels")
-    common_labels: Dict[str, str] = Field(alias="commonLabels")
-    common_annotations: Dict[str, str] = Field(alias="commonAnnotations")
-    external_url: str = Field(alias="externalURL")
+class ProberEnum(str, Enum):
+    http = "http"
 
 
-class DingTalkMessage(BaseModel):
-    msgtype: str = "markdown"
-    markdown: Dict[str, str]
+class HTTPMethod(str, Enum):
+    GET = "GET"
+    POST = "POST"
+    PUT = "PUT"
+    PATCH = "PATCH"
+    DELETE = "DELETE"
+
+
+class IPProtocol(str, Enum):
+    ip4 = "ip4"
+    ip6 = "ip6"
+
+
+class ExporterModule(Base):
+    __tablename__ = "exporter_modules"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    jobs: Mapped[List["ScrapeJob"]] = relationship(back_populates="module")
+    name = Column(String, unique=True, index=True)
+    timeout = Column(String)
+
+    prober = Column(SQLEnum(ProberEnum))
+    method = Column(SQLEnum(HTTPMethod))
+    headers = Column(JSON, nullable=True)
+    body = Column(JSON, nullable=True)
+    preferred_ip_protocol = Column(SQLEnum(IPProtocol))
+
+
+class ScrapeJob(Base):
+    __tablename__ = "scrape_configs"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    module_id: Mapped[int] = mapped_column(ForeignKey("exporter_modules.id"))
+    module: Mapped["ExporterModule"] = relationship(back_populates="jobs")
+    target = Column(JSON)
+
+
+class AlterGroup(Base):
+    __tablename__ = "alert_groups"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    rules: Mapped[List["AlertRule"]] = relationship(back_populates="group")
+
+
+class AlertRule(Base):
+    __tablename__ = "alert_rules"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    group_id: Mapped[int] = mapped_column(ForeignKey("alert_groups.id"))
+    group: Mapped["AlterGroup"] = relationship(back_populates="rules")
+    name = Column(String)
+    expr = Column(Text, unique=True)
+    alert_for = Column(String)
+    labels = Column(JSON)
+    annotations = Column(JSON)
