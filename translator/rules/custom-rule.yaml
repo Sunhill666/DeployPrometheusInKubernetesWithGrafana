@@ -1,0 +1,12 @@
+groups:
+  - name: does_aiproxy_ok
+    rules:
+      - alert: API Error
+        expr: probe_http_status_code != 200
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: API Error!
+          description: The request API gets a non 200 status code!
+
