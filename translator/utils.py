@@ -2,7 +2,7 @@ from typing import Dict
 
 from sqlalchemy.orm import Session
 
-from translator.schemas import Notification
+from schemas import Notification
 
 
 def render_message(notification: Notification) -> Dict[str, str]:
