@@ -1,8 +1,7 @@
-from typing import Dict
-
 import requests
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi_pagination.ext.sqlalchemy_future import paginate
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -10,11 +9,12 @@ from sqlalchemy.orm import Session
 import crud
 import models
 import schemas
-from database import SessionLocal, engine
+from database import engine, get_db
 from log import init_logging, logger, log
 from paginator import Page, Params
 from schemas import Notification, DingTalkMessage
 from settings import WEBHOOK_URL, ACCESS_TOKEN
+from translator.utils import render_message, write_serve
 
 app = FastAPI()
 
@@ -23,17 +23,9 @@ models.Base.metadata.create_all(bind=engine)
 init_logging()
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
 @app.get("/")
 @log
-async def root():
+def root():
     return {"message": "Hello World"}
 
 
@@ -191,10 +183,20 @@ def http_sd_config(db: Session = Depends(get_db)):
     return ret
 
 
+@app.get("/start/{namespace}/")
+@log
+def gen_serve(namespace: str, db: Session = Depends(get_db)):
+    if write_serve(db, namespace):
+        logger.info("服务生成成功")
+        return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "服务生成成功"})
+    logger.error("服务生成失败")
+    return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "服务生成失败"})
+
+
 # WebHook
 @app.post("/webhook")
 @log
-async def webhook(notification: Notification):
+def webhook(notification: Notification):
     logger.info("告警原始信息：")
     logger.info(notification.dict())
     markdown = render_message(notification)
@@ -213,23 +215,7 @@ async def webhook(notification: Notification):
     return message.dict()
 
 
-def render_message(notification: Notification) -> Dict[str, str]:
-    alert_status = "已解决" if notification.status == "resolved" else "告警"
-    title = f"{alert_status}：{notification.group_labels.get('alertname')}"
-    group_label = [i.strip(" ").replace('"', '')
-                   for i in notification.group_key[notification.group_key.index(':') + 2: -1].split(',')]
-    text = f"**[{alert_status}]**\n\n**通知组**：\n"
-    for i in group_label:
-        key, val = i.split('=')[0], i.split('=')[1]
-        text += f"- **{key}**: {val}\n"
-    text += "\n**通知内容**：\n\n"
-    for alert in notification.alerts:
-        text += f"{alert.annotations.get('summary')} \n> {alert.annotations.get('description')}\n> \n"
-        text += f"> **开始时间**：{alert.start_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
-    return {"title": title, "text": text}
-
-
 @app.get("/ping")
 @log
-async def healthy():
+def healthy():
     return {"message": "pong"}

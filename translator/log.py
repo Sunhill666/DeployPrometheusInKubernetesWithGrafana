@@ -34,7 +34,7 @@ class InterceptHandler(logging.Handler):
 
 def log(func):
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         logger.info("-" * 40)
         logger.info(f"调用 {func.__name__}()")
         logger.info("-" * 40)

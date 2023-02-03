@@ -2967,8 +2967,8 @@ prometheus:
     additionalScrapeConfigs:
       - job_name: "http_sd"
         metrics_path: /probe
-        http_sd_config:
-          url: http://dingtalk-prometheus-translator-service:8000/serve/
+        http_sd_configs:
+          - url: "http://dingtalk-prometheus-translator-service:8000/serve/"
         relabel_configs:
           - source_labels: [ __address__ ]
             target_label: __param_target
