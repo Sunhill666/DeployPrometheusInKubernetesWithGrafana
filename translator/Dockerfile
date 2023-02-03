@@ -1,4 +1,4 @@
-FROM python:3.9.15-alpine
+FROM registry.cn-hangzhou.aliyuncs.com/sunhill/python:3.9.15-alpine
 WORKDIR /project
 
 EXPOSE 8000
