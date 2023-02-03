@@ -183,10 +183,10 @@ def http_sd_config(db: Session = Depends(get_db)):
     return ret
 
 
-@app.get("/start/{namespace}/")
+@app.get("/start/")
 @log
-def gen_serve(namespace: str, db: Session = Depends(get_db)):
-    if write_serve(db, namespace):
+def gen_serve(db: Session = Depends(get_db)):
+    if write_serve(db):
         logger.info("服务生成成功")
         return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "服务生成成功"})
     logger.error("服务生成失败")
