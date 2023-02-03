@@ -14,7 +14,7 @@ from log import init_logging, logger, log
 from paginator import Page, Params
 from schemas import Notification, DingTalkMessage
 from settings import WEBHOOK_URL, ACCESS_TOKEN
-from translator.utils import render_message, write_serve
+from utils import render_message, write_serve
 
 app = FastAPI()
 
