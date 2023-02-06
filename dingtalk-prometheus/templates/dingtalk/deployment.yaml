@@ -1,3 +1,33 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-storage
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+spec:
+  storageClassName: nfs-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-storage
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+spec:
+  storageClassName: nfs-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,3 +53,46 @@ spec:
           env:
             - name: DINGTALK_ACCESS_TOKEN
               value: {{ .Values.dingTalk.accessToken }}
+            - name: DB_HOST
+              value: postgres-db
+            - name: DB_NAME
+              value: prom_db
+            - name: DB_PASSWORD
+              value: admin123_prom
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: db_admin
+            - name: prometheus_service
+              value: dingtalk-prometheus-prometheus:9090
+            - name: blackbox_service
+              value: dingtalk-prometheus-prometheus-blackbox-exporter:9115
+          volumeMounts:
+            - name: serve-prometheus-modules
+              mountPath: /project/modules
+            - name: serve-prometheus-rules
+              mountPath: /project/rules
+        - image: postgres:14.5-alpine
+          name: prometheus-serve-db
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: admin123_prom
+            - name: POSTGRES_USER
+              value: db_admin
+            - name: POSTGRES_DB
+              value: prom_db
+          volumeMounts:
+            - name: postgresdb
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: serve-prometheus-modules
+          persistentVolumeClaim:
+            claimName: prometheus-storage
+        - name: serve-prometheus-rules
+          persistentVolumeClaim:
+            claimName: prometheus-storage
+        - name: postgresdb
+          persistentVolumeClaim:
+            claimName: postgres-storage

@@ -3763,3 +3763,5 @@ dingTalk:
 
 blackboxExporter:
   enabled: true
+
+# prometheus-blackbox-exporter:

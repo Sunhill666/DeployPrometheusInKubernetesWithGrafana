@@ -16,6 +16,9 @@
   - [坑点 \*](#坑点-)
   - [部署](#部署)
 - [Grafana DashBoard 配置](#grafana-dashboard-配置)
+- [关于自动生成告警](#关于自动生成告警)
+  - [关于 `target` 值与 `params` 中的 `module` 参数如何对接](#关于-target-值与-params-中的-module-参数如何对接)
+  - [translator 服务](#translator-服务)
 - [Q\&A](#qa)
 - [TODO](#todo)
 - [参考](#参考)
@@ -441,6 +444,59 @@ kubeStateMetrics:
     再点击 Run queries，点击 Apply，保存 DashBoard，就可以看到监控数据了
     ![DashBoard](pics/pic-10.png)
     至此结束！
+
+## 关于自动生成告警
+
+### 关于 `target` 值与 `params` 中的 `module` 参数如何对接
+
+```yaml
+additionalScrapeConfigs:
+  - job_name: "http_sd"
+    metrics_path: /probe
+    http_sd_config:
+      url: "" # 此处为获取 target 和 module 的值的地址
+    relabel_configs:
+      - source_labels: [ __address__ ]
+        target_label: __param_target
+      - source_labels: [ __param_target ]
+        target_label: instance
+      - source_labels: [ module ] # 此处起关键作用，使用 Prometheus 的 Relabel 为其重新绑定参数
+        target_label: __param_module
+      - target_label: __address__
+        replacement: ""
+```
+
+### translator 服务
+
+`translator` 服务 API 文档在根目录 `API-DOC-Postman-v2.1.json` 文件中
+
+`translator` 中的服务是根据用户使用 `POST` 所请求的数据来生成 `Exporter Module` 和告警规则文件在项目目录中，以及 Prometheus 所需的 `http_sd_configss`.
+
+现需解决如何使 Prometheus 和 BlackBox Exporter 读取到生成的配置文件文件，现有如下方案：将 translator 服务生成的配置文件挂载出去，让 Prometheus 和 BlackBox Exporter 可以读取到即可完成：
+
+```yaml
+# values.yaml
+promethues:
+  prometheusSpec:
+    volumes:
+      - name: serve-prometheus-rules
+        persistentVolumeClaim:
+          claimName: prometheus-storage
+    volumeMounts:
+      - name: serve-prometheus-rules
+        mountPath: /etc/custom
+
+prometheus-blackbox-exporter:
+  extraVolumes:
+      - name: serve-prometheus-modules
+        persistentVolumeClaim:
+          claimName: prometheus-storage
+  extraVolumeMounts:
+    - name: serve-prometheus-modules
+      mountPath: /etc/custom
+```
+
+`translator` 的 Chart 在 `templates/dingtalk` 目录下
 
 ## Q&A
 

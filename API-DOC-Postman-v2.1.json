@@ -1,0 +1,640 @@
+{
+	"info": {
+		"_postman_id": "0344dbe4-d52d-44b9-be17-f321f10546b1",
+		"name": "Prometheus",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23956506"
+	},
+	"item": [
+		{
+			"name": "Alert",
+			"item": [
+				{
+					"name": "创建告警组",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"does_aiproxy_ok\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/rule-group/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"rule-group",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "获取告警组列表",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"does_aiproxy_ok\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/rule-group/?page=1&size=20",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"rule-group",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "获取告警组",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"does_aiproxy_ok\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/rule-group/{group_id}/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"rule-group",
+								"{group_id}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "删除告警组",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"does_aiproxy_ok\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/rule-group/{group_id}/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"rule-group",
+								"{group_id}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "创建告警",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"group_id\": 1,\n    \"name\": \"API Error\",\n    \"expr\": \"probe_http_status_code != 200\",\n    \"alert_for\": \"1m\",\n    \"labels\": {\n        \"severity\": \"critical\"\n    },\n    \"annotations\": {\n        \"summary\": \"API Error!\",\n        \"description\": \"The request API gets a non 200 status code!\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/rule/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"rule",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "获取告警列表",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"group\": 1,\n    \"name\": \"API Error\",\n    \"expr\": \"probe_http_status_code != 200\",\n    \"alert_for\": \"1m\",\n    \"labels\": {\n        \"severity\": \"critical\"\n    },\n    \"annotations\": {\n        \"summary\": \"API Error!\",\n        \"description\": \"The request API gets a non 200 status code!\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/rule/?page=1&size=20",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"rule",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "获取告警",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"group\": 1,\n    \"name\": \"API Error\",\n    \"expr\": \"probe_http_status_code != 200\",\n    \"alert_for\": \"1m\",\n    \"labels\": {\n        \"severity\": \"critical\"\n    },\n    \"annotations\": {\n        \"summary\": \"API Error!\",\n        \"description\": \"The request API gets a non 200 status code!\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/rule/{rule_id}/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"rule",
+								"{rule_id}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "删除告警",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"group\": 1,\n    \"name\": \"API Error\",\n    \"expr\": \"probe_http_status_code != 200\",\n    \"alert_for\": \"1m\",\n    \"labels\": {\n        \"severity\": \"critical\"\n    },\n    \"annotations\": {\n        \"summary\": \"API Error!\",\n        \"description\": \"The request API gets a non 200 status code!\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/rule/{rule_id}/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"rule",
+								"{rule_id}",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Job",
+			"item": [
+				{
+					"name": "创建抓取任务",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"target\": [\n        \"http://ai-aiproxy.shoppingmall:8080/aiproxy\"\n    ],\n    \"module_id\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/job/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"job",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "获取抓取任务列表",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"target\": \"http://ai-aiproxy.shoppingmall:8080/aiproxy\",\n    \"module\": 13\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/job/?page=1&size=20",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"job",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "页码"
+								},
+								{
+									"key": "size",
+									"value": "20",
+									"description": "大小"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "获取抓取任务",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"target\": \"http://ai-aiproxy.shoppingmall:8080/aiproxy\",\n    \"module\": 13\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/job/{job_id}/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"job",
+								"{job_id}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "删除抓取任务",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"target\": \"http://ai-aiproxy.shoppingmall:8080/aiproxy\",\n    \"module\": 13\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/job/{job_id}/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"job",
+								"{job_id}",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Exporter Module",
+			"item": [
+				{
+					"name": "创建Module",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"r_u_ok\",\n    \"timeout\": \"15s\",\n    \"prober\": \"http\",\n    \"method\": \"POST\",\n    \"headers\": {\n        \"Content-Type\": \"application/json\"\n    },\n    \"body\": {\n        \"image\": \"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\",\n        \"age\": 18,\n        \"gender\": 0\n    },\n    \"preferred_ip_protocol\": \"ip4\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/module/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"module",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "获取Module列表",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"r_u_ok\",\n    \"timeout\": \"15s\",\n    \"prober\": \"http\",\n    \"method\": \"POST\",\n    \"headers\": {\n        \"Content-Type\": \"application/json\"\n    },\n    \"body\": {\n        \"image\": \"aas\",\n        \"age\": 18,\n        \"gender\": 0\n    },\n    \"preferred_ip_protocol\": \"ip4\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/module?page=1&size=20",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"module"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "页码"
+								},
+								{
+									"key": "size",
+									"value": "20",
+									"description": "页面大小"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "获取Module",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"r_u_ok\",\n    \"timeout\": \"15s\",\n    \"prober\": \"http\",\n    \"method\": \"POST\",\n    \"headers\": {\n        \"Content-Type\": \"application/json\"\n    },\n    \"body\": {\n        \"image\": \"aas\",\n        \"age\": 18,\n        \"gender\": 0\n    },\n    \"preferred_ip_protocol\": \"ip4\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/module/{module_id}/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"module",
+								"{module_id}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "删除Module",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"r_u_ok\",\n    \"timeout\": \"15s\",\n    \"prober\": \"http\",\n    \"method\": \"POST\",\n    \"headers\": {\n        \"Content-Type\": \"application/json\"\n    },\n    \"body\": {\n        \"image\": \"aas\",\n        \"age\": 18,\n        \"gender\": 0\n    },\n    \"preferred_ip_protocol\": \"ip4\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}/module/{module_id}/",
+							"host": [
+								"{{local}}"
+							],
+							"path": [
+								"module",
+								"{module_id}",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "WebHook",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"version\": \"4\",\n    \"receiver\": \"null\",\n    \"status\": \"resolved\",\n    \"truncated_alerts\": 0,\n    \"groupKey\": \"{}:{alertname=\\\"CPUUsageAlert\\\", instance=\\\"192.168.199.107:9100\\\"}\",\n    \"alerts\": [\n        {\n            \"status\": \"resolved\",\n            \"labels\": {\n                \"alertname\": \"CPUUsageAlert\",\n                \"instance\": \"192.168.199.107:9100\",\n                \"prometheus\": \"monitoring/prometheus-kube-prometheus-prometheus\",\n                \"severity\": \"warning\"\n            },\n            \"annotations\": {\n                \"description\": \"Node 192.168.199.107:9100 CPU usage above 85% (current value: 90.02110312642269)\",\n                \"summary\": \"Node 192.168.199.107:9100 CPU usgae high\"\n            },\n            \"startsAt\": \"2023-01-16T12:29:30.885000+00:00\",\n            \"endsAt\": \"2023-01-17T02:07:00.885000+00:00\",\n            \"generatorURL\": \"http://prometheus.sxkj.com/graph?g0.expr=sum+by+%28instance%29+%28rate%28node_cpu_seconds_total%7Bmode%3D%22idle%22%7D%5B5m%5D%29%29+%2F+sum+by+%28instance%29+%28rate%28node_cpu_seconds_total%5B5m%5D%29%29+%2A+100+%3E+90&g0.tab=1\",\n            \"fingerprint\": \"47612f732f3afc52\"\n        }\n    ],\n    \"groupLabels\": {\n        \"alertname\": \"CPUUsageAlert\",\n        \"instance\": \"192.168.199.107:9100\"\n    },\n    \"commonLabels\": {\n        \"alertname\": \"CPUUsageAlert\",\n        \"instance\": \"192.168.199.107:9100\",\n        \"prometheus\": \"monitoring/prometheus-kube-prometheus-prometheus\",\n        \"severity\": \"warning\"\n    },\n    \"commonAnnotations\": {\n        \"description\": \"Node 192.168.199.107:9100 CPU usage above 85% (current value: 90.02110312642269)\",\n        \"summary\": \"Node 192.168.199.107:9100 CPU usgae high\"\n    },\n    \"externalURL\": \"http://alertmanager.sxkj.com\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{local}}/webhook",
+					"host": [
+						"{{local}}"
+					],
+					"path": [
+						"webhook"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "AiProxy",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"image\": \"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\",\n    \"age\": 18,\n    \"gender\": 0\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://aiproxy.sxkj.com/aiproxy",
+					"protocol": "http",
+					"host": [
+						"aiproxy",
+						"sxkj",
+						"com"
+					],
+					"path": [
+						"aiproxy"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Healthy",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{local}}/ping",
+					"host": [
+						"{{local}}"
+					],
+					"path": [
+						"ping"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http_sd_config",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{local}}/serve/",
+					"host": [
+						"{{local}}"
+					],
+					"path": [
+						"serve",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "生成服务",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{local}}/start/",
+					"host": [
+						"{{local}}"
+					],
+					"path": [
+						"start",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
